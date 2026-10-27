@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 50% 40%, #ffffff, #dfe3d8);
+    }
+
+    /* Carcasa: plástico verde lima translúcido (estilo Xbox edición transparente) */
+    .calculadora {
+      position: relative;
+      width: 320px;
+      padding: 28px 24px 30px;
+      box-sizing: border-box;
+      border-radius: 30px;
+      overflow: hidden;
+      isolation: isolate;
+      background: linear-gradient(160deg, #b5dc4a, #8bbb2c 45%, #5f8f17);
+      box-shadow:
+        0 35px 60px rgba(40, 60, 10, 0.35),
+        0 10px 20px rgba(0, 0, 0, 0.15),
+        inset 0 0 0 2px rgba(225, 255, 150, 0.7),
+        inset 0 0 22px rgba(230, 255, 160, 0.45),
+        inset 0 -10px 20px rgba(40, 70, 0, 0.35);
+    }
+
+    /* Circuito visto a través del plástico: oscurece el verde y se ve borroso */
+    .circuito {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      mix-blend-mode: multiply;
+      filter: blur(0.7px);
+      opacity: 1;
+    }
+
+    /* Neblina del plástico esmerilado encima del circuito */
+    .calculadora::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background: linear-gradient(180deg, rgba(200, 240, 110, 0.18), rgba(150, 200, 60, 0.06));
+    }
+
+    /* Brillo de la superficie */
+    .calculadora::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      border-radius: inherit;
+      background: linear-gradient(120deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.08) 28%, transparent 42%);
+      pointer-events: none;
+    }
+
+    .pantalla, .etiqueta, .teclado {
+      position: relative;
+      z-index: 2;
+    }
+
+    /* Pantalla LCD con marco oscuro */
+    .pantalla {
+      display: block;
+      width: 100%;
+      height: 72px;
+      box-sizing: border-box;
+      padding: 0 16px;
+      border: 4px solid #1f2d0c;
+      border-radius: 10px;
+      background: linear-gradient(170deg, #d3dcb6, #aeb98d);
+      box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.5);
+      text-align: right;
+      font-family: "Courier New", monospace;
+      font-style: italic;
+      font-weight: bold;
+      font-size: 30px;
+      color: #1c2310;
+      line-height: 64px;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .etiqueta {
+      margin: 68px 0 14px;
+      height: 12px;
+      line-height: 12px;
+      text-align: center;
+      font-size: 10px;
+      font-weight: bold;
+      letter-spacing: 3px;
+      color: rgba(35, 60, 5, 0.7);
+    }
+
+    .teclado {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      padding: 14px;
+      border-radius: 18px;
+      box-shadow: inset 0 2px 8px rgba(30, 60, 0, 0.35), inset 0 0 0 1px rgba(230, 255, 160, 0.35);
+    }
+
+    /* Teclas de goma translúcida: se ve el contacto del circuito debajo */
+    .teclado button {
+      height: 54px;
+      border-radius: 14px;
+      border: 1px solid rgba(235, 255, 170, 0.65);
+      background: linear-gradient(rgba(215, 250, 120, 0.3), rgba(120, 180, 30, 0.15));
+      color: #fbfff0;
+      font-size: 20px;
+      font-weight: bold;
+      text-shadow: 0 1px 2px rgba(20, 40, 0, 0.7);
+      cursor: pointer;
+      box-shadow:
+        0 4px 0 rgba(60, 95, 10, 0.9),
+        0 7px 10px rgba(30, 50, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7),
+        inset 0 -3px 6px rgba(50, 90, 0, 0.3);
+      transition: transform 0.08s, box-shadow 0.08s, filter 0.15s;
+    }
+
+    /* Animaciones: la tecla sube un poco al pasar el mouse y se hunde con brillo al presionarla */
+    .teclado button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.1);
+    }
+
+    .teclado button:active,
+    .teclado button.presionada {
+      transform: translateY(3px);
+      filter: brightness(1.2);
+      box-shadow:
+        0 1px 0 rgba(60, 95, 10, 0.9),
+        0 0 14px rgba(210, 255, 120, 0.7),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7),
+        inset 0 -3px 6px rgba(50, 90, 0, 0.3);
+    }
+
+    .teclado button:focus-visible {
+      outline: 2px solid #f4ffd6;
+      outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .teclado button { transition: none; }
+    }
+
+    .teclado .operador {
+      background: linear-gradient(rgba(120, 175, 40, 0.45), rgba(65, 115, 15, 0.4));
+    }
+
+    .teclado .igual {
+      grid-column: 4;
+      grid-row: 4 / span 2;
+      height: auto;
+      font-size: 28px;
+      background: linear-gradient(#3f6b12, #24420a);
+      border-color: rgba(190, 240, 110, 0.6);
+    }
+
+    /* Botón de modo claro / oscuro */
+    .tema {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      padding: 10px 16px;
+      border-radius: 20px;
+      border: 1px solid rgba(95, 143, 23, 0.5);
+      background: rgba(255, 255, 255, 0.75);
+      color: #2f4a0f;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    /* ----- Modo oscuro: plástico verde ahumado y pantalla con luz ----- */
+    body.oscuro {
+      background: radial-gradient(circle at 50% 40%, #2c3a1c, #0a0d06);
+    }
+
+    body.oscuro .calculadora {
+      background: linear-gradient(160deg, #5a7f1f, #3a5a12 45%, #1f3408);
+      box-shadow:
+        0 35px 60px rgba(0, 0, 0, 0.6),
+        0 0 50px rgba(140, 220, 40, 0.25),
+        inset 0 0 0 2px rgba(190, 240, 110, 0.5),
+        inset 0 0 22px rgba(190, 240, 110, 0.25),
+        inset 0 -10px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    body.oscuro .pantalla {
+      background: linear-gradient(170deg, #b8e86a, #86c23a);
+      box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.45), 0 0 18px rgba(170, 240, 80, 0.4);
+    }
+
+    body.oscuro .etiqueta { color: rgba(210, 250, 150, 0.7); }
+
+    body.oscuro .tema {
+      background: rgba(30, 45, 12, 0.85);
+      color: #d8f5a8;
+      border-color: rgba(180, 230, 100, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <button id="boton_tema" class="tema" onclick="changeTheme()">☾ Dark</button>
+
+  <div class="calculadora">
+
+    <!-- Circuito interno (placa, pistas, contactos, chip, pila) -->
+    <svg class="circuito" viewBox="0 0 320 570" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <!-- Contacto de cobre debajo de cada tecla -->
+        <pattern id="contactos" x="38" y="208" width="64" height="66" patternUnits="userSpaceOnUse">
+          <circle cx="26" cy="27" r="18" fill="#6e6e6e" />
+          <circle cx="26" cy="27" r="14" fill="#e8e8e8" /><circle cx="26" cy="27" r="9" fill="#5a5a5a" />
+          <path d="M12 27h28M26 13v28" stroke="#e8e8e8" stroke-width="2" />
+        </pattern>
+      </defs>
+
+      <!-- Placa -->
+      <rect x="12" y="12" width="296" height="546" rx="22" fill="#b4b4b4" />
+
+      <!-- Pistas -->
+      <g stroke="#7a7a7a" stroke-width="2.5" fill="none">
+        <path d="M96 196V540 M160 156V540 M224 196V540" />
+        <path d="M30 268H290 M30 334H290 M30 400H290 M30 466H290 M30 532H290" />
+        <path d="M132 136H86 M188 136H232 M232 136V196H96 M40 112V532 M280 112V532" />
+        <path d="M150 154L120 184H40 M170 154L200 184H280" />
+      </g>
+
+      <!-- Contactos del teclado -->
+      <rect x="38" y="208" width="256" height="330" fill="url(#contactos)" />
+
+      <!-- Conector de la pantalla -->
+      <rect x="40" y="102" width="240" height="8" fill="#555" />
+
+      <!-- Chip (gota negra de resina) -->
+      <ellipse cx="160" cy="138" rx="28" ry="16" fill="#1b1b1b" />
+
+      <!-- Pila de botón -->
+      <circle cx="58" cy="140" r="20" fill="#d2d2d2" stroke="#6a6a6a" stroke-width="3" />
+      <circle cx="58" cy="140" r="11" fill="none" stroke="#9a9a9a" stroke-width="2" />
+
+      <!-- Resistencias y capacitor -->
+      <rect x="244" y="130" width="24" height="10" rx="2" fill="#3a3a3a" />
+      <rect x="276" y="126" width="10" height="20" rx="2" fill="#3a3a3a" />
+
+      <!-- Vías -->
+      <g fill="#e6e6e6">
+        <circle cx="96" cy="268" r="3" /><circle cx="224" cy="268" r="3" />
+        <circle cx="160" cy="334" r="3" /><circle cx="96" cy="400" r="3" />
+        <circle cx="224" cy="466" r="3" /><circle cx="160" cy="532" r="3" />
+        <circle cx="40" cy="184" r="3" /><circle cx="280" cy="184" r="3" />
+      </g>
+
+      <!-- Postes de los tornillos -->
+      <g fill="#4a4a4a">
+        <circle cx="30" cy="30" r="7" /><circle cx="290" cy="30" r="7" />
+        <circle cx="30" cy="540" r="7" /><circle cx="290" cy="540" r="7" />
+      </g>
+    </svg>
+
+    <label id="calculadora_data" class="pantalla">0</label>
+
+    <div class="etiqueta">THIZ INDUSTRIES</div>
+
+    <!-- data-tecla = tecla del teclado que presiona este botón -->
+    <div class="teclado">
+      <button class="operador" data-tecla="Escape" onclick="_clear()">AC</button>
+      <button class="operador" data-tecla="%" onclick="percent()">%</button>
+      <button class="operador" data-tecla="*" onclick="setOperation('*')">×</button>
+      <button class="operador" data-tecla="/" onclick="setOperation('/')">÷</button>
+
+      <button data-tecla="7" onclick="addNumber(7)">7</button>
+      <button data-tecla="8" onclick="addNumber(8)">8</button>
+      <button data-tecla="9" onclick="addNumber(9)">9</button>
+      <button class="operador" data-tecla="-" onclick="setOperation('-')">−</button>
+
+      <button data-tecla="4" onclick="addNumber(4)">4</button>
+      <button data-tecla="5" onclick="addNumber(5)">5</button>
+      <button data-tecla="6" onclick="addNumber(6)">6</button>
+      <button class="operador" data-tecla="+" onclick="setOperation('+')">+</button>
+
+      <button data-tecla="1" onclick="addNumber(1)">1</button>
+      <button data-tecla="2" onclick="addNumber(2)">2</button>
+      <button data-tecla="3" onclick="addNumber(3)">3</button>
+      <button class="igual" data-tecla="=" onclick="setOperation('=')">=</button>
+
+      <button data-tecla="0" onclick="addNumber(0)">0</button>
+      <button data-tecla="." onclick="addDecimal()">,</button>
+      <button class="operador" onclick="changeSign()">+/-</button>
+    </div>
+  </div>
+
+  <script>
+    var num1 = 0      // primer número
+    var num2 = 0      // segundo número
+    var ope = ""      // operación pendiente: "+", "-", "*" o "/"
+    var nuevo = false // true = el próximo dígito empieza un número nuevo
+
+    function _clear()
+    {
+      let data = document.getElementById("calculadora_data")
+
+      data.innerHTML = "0"
+      num1 = 0
+      num2 = 0
+      ope = ""
+      nuevo = false
+    }
+
+    function addNumber(value)
+    {
+      let data = document.getElementById("calculadora_data")
+
+      if (nuevo || data.innerHTML == "0" || data.innerHTML == "Error") {
+        data.innerHTML = value
+        nuevo = false
+      } else if (data.innerHTML.length < 12) {
+        data.innerHTML += value
+      }
+    }
+
+    function addDecimal()
+    {
+      let data = document.getElementById("calculadora_data")
+
+      if (nuevo || data.innerHTML == "Error") {
+        data.innerHTML = "0."
+        nuevo = false
+      } else if (data.innerHTML.indexOf(".") == -1) {
+        data.innerHTML += "."
+      }
+    }
+
+    function setOperation(_ope)
+    {
+      let data = document.getElementById("calculadora_data")
+
+      if (data.innerHTML == "Error") return
+
+      // Si ya había una operación y se escribió el segundo número, se resuelve primero
+      if (ope != "" && !nuevo) {
+        num2 = parseFloat(data.innerHTML)
+        data.innerHTML = calculate(num1, num2, ope)
+
+        if (data.innerHTML == "Error") {
+          ope = ""
+          return
+        }
+      }
+
+      if (_ope == "=") {
+        ope = ""
+      } else {
+        num1 = parseFloat(data.innerHTML)
+        ope = _ope
+      }
+
+      nuevo = true
+    }
+
+    function calculate(a, b, _ope)
+    {
+      let result = 0
+
+      if (_ope == "+") result = a + b
+      if (_ope == "-") result = a - b
+      if (_ope == "*") result = a * b
+      if (_ope == "/") {
+        if (b == 0) return "Error"
+        result = a / b
+      }
+
+      // toFixed quita errores como 0.1 + 0.2 = 0.30000000000000004
+      return parseFloat(result.toFixed(10))
+    }
+
+    function changeSign()
+    {
+      let data = document.getElementById("calculadora_data")
+
+      if (data.innerHTML == "0" || data.innerHTML == "Error") return
+      data.innerHTML = parseFloat(data.innerHTML) * -1
+    }
+
+    // 200 + 10 % → 20     200 × 10 % → 0.1
+    function percent()
+    {
+      let data = document.getElementById("calculadora_data")
+
+      if (data.innerHTML == "Error") return
+      let value = parseFloat(data.innerHTML)
+
+      if (ope == "+" || ope == "-") {
+        data.innerHTML = num1 * value / 100
+      } else {
+        data.innerHTML = value / 100
+      }
+    }
+
+    function changeTheme()
+    {
+      let boton = document.getElementById("boton_tema")
+
+      document.body.classList.toggle("oscuro")
+
+      if (document.body.classList.contains("oscuro")) {
+        boton.innerHTML = "☀ Light"
+      } else {
+        boton.innerHTML = "☾ Dark"
+      }
+    }
+
+    // Teclado: busca el botón con esa tecla, lo presiona y lo anima
+    document.addEventListener("keydown", function (e)
+    {
+      if (e.ctrlKey || e.metaKey || e.altKey) return  // no bloquear atajos como Ctrl + R
+
+      let tecla = e.key
+
+      if (tecla == "Enter") tecla = "="
+      if (tecla == ",") tecla = "."
+      if (tecla == "x" || tecla == "X") tecla = "*"
+      if (tecla == "Delete") tecla = "Escape"
+
+      let boton = document.querySelector('[data-tecla="' + CSS.escape(tecla) + '"]')
+      if (boton == null) return
+
+      e.preventDefault()  // evita que Enter presione dos veces o que "/" abra la búsqueda
+      boton.click()
+
+      boton.classList.add("presionada")
+      setTimeout(function () {
+        boton.classList.remove("presionada")
+      }, 120)
+    })
+  </script>
+</body>
+</html>
