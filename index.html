@@ -278,7 +278,6 @@
 
     <div class="etiqueta">THIZ INDUSTRIES</div>
 
-    <!-- data-tecla = tecla del teclado que presiona este botón -->
     <div class="teclado">
       <button class="operador" data-tecla="Escape" onclick="_clear()">AC</button>
       <button class="operador" data-tecla="%" onclick="percent()">%</button>
@@ -307,10 +306,10 @@
   </div>
 
   <script>
-    var num1 = 0      // primer número
-    var num2 = 0      // segundo número
-    var ope = ""      // operación pendiente: "+", "-", "*" o "/"
-    var nuevo = false // true = el próximo dígito empieza un número nuevo
+    var num1 = 0
+    var num2 = 0
+    var ope = ""
+    var nuevo = false
 
     function _clear()
     {
@@ -353,7 +352,6 @@
 
       if (data.innerHTML == "Error") return
 
-      // Si ya había una operación y se escribió el segundo número, se resuelve primero
       if (ope != "" && !nuevo) {
         num2 = parseFloat(data.innerHTML)
         data.innerHTML = calculate(num1, num2, ope)
@@ -386,7 +384,6 @@
         result = a / b
       }
 
-      // toFixed quita errores como 0.1 + 0.2 = 0.30000000000000004
       return parseFloat(result.toFixed(10))
     }
 
@@ -398,7 +395,6 @@
       data.innerHTML = parseFloat(data.innerHTML) * -1
     }
 
-    // 200 + 10 % → 20     200 × 10 % → 0.1
     function percent()
     {
       let data = document.getElementById("calculadora_data")
@@ -426,10 +422,9 @@
       }
     }
 
-    // Teclado: busca el botón con esa tecla, lo presiona y lo anima
     document.addEventListener("keydown", function (e)
     {
-      if (e.ctrlKey || e.metaKey || e.altKey) return  // no bloquear atajos como Ctrl + R
+      if (e.ctrlKey || e.metaKey || e.altKey) return
 
       let tecla = e.key
 
@@ -441,7 +436,7 @@
       let boton = document.querySelector('[data-tecla="' + CSS.escape(tecla) + '"]')
       if (boton == null) return
 
-      e.preventDefault()  // evita que Enter presione dos veces o que "/" abra la búsqueda
+      e.preventDefault()
       boton.click()
 
       boton.classList.add("presionada")
